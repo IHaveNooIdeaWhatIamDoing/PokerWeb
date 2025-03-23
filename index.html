@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <br>
+    <a>Cards:</a>
+    
+    <div id="DealerCardsDiv"></div>
+    <br>
+    
+    <div id="Result"></div>
+    <br>
+    <table style="border: 1px;">
+        <tr>
+            <td>
+                <a>Player 1 Cards:</a>
+                <div id="PlayerCardsDiv"></div>
+                <br>
+                Dein Einsatz:
+                <input type="number" id="Player1Bet" value="0" step="10" min="0">
+                <br>
+                <br>
+                <input type="button" value="Increase" id="PlayerIncreaseButton">
+                <input type="button" value="Check" id="PlayerCheckButton">
+                <input type="button" value="Call" id="PlayerCallButton">
+                <br>
+                <br>
+                Du hast:
+                <input type="number" id="Player1Money" value="100" readonly>
+            </td>
+            <td>
+                <a>Player 2 Cards:</a>
+                <div id="Player2CardsDiv"></div>
+                <br>
+                Dein Einsatz:
+                <input type="number" id="Player2Bet" value="0" step="10" min="0">
+                <br>
+                <br>
+                <input type="button" value="Increase" id="Player2IncreaseButton">
+                <input type="button" value="Check" id="Player2CheckButton">
+                <input type="button" value="Call" id="Player2CallButton">
+                <br>
+                <br>
+                Du hast:
+                <input type="number" id="Player2Money" value="100" readonly>
+            </td>
+            <td>
+                <a>Player 3 Cards:</a>
+                <div id="Player3CardsDiv"></div>
+                <br>
+                Dein Einsatz:
+                <input type="number" id="Player3Bet" value="0" step="10" min="0">
+                <br>
+                <br>
+                <input type="button" value="Increase" id="Player3IncreaseButton">
+                <input type="button" value="Check" id="Player3CheckButton">
+                <input type="button" value="Call" id="Player3CallButton">
+                <br>
+                <br>
+                Du hast:
+                <input type="number" id="Player3Money" value="100" readonly>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</table>
+
+
+
+    <script src="main.js"></script>
+</body>
+</html>
