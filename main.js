@@ -9,10 +9,12 @@ let cardValues = [];
 const doc = document;
 const PlayerCardDiv = doc.querySelectorAll('#PlayerCardsDiv');
 const DealerCardDiv = doc.getElementById('DealerCardsDiv');
+const PlayerIncreaseBtn = doc.querySelectorAll('#IncreaseButton');
 
 getCardPaths();
-spawnCard(PlayerCardDiv[0]);
-spawnCard(DealerCardDiv);
+
+handOut(3);
+
 
 
 function spawnCard(SpawnDiv){
@@ -29,7 +31,18 @@ function getRandomCardIndex(){
     return Math.round(Math.random() * 52);
 }
 
-
+function handOut(PlayerCount){
+    for(let i = 0; i < PlayerCount; i++){
+        spawnCard(PlayerCardDiv[i]);
+        spawnCard(PlayerCardDiv[i]);
+    }
+}
+function getBet(){
+    addEventListener('click', function(EventTarget){
+        console.log(EventTarget.target.id);
+        
+     });
+}
 
 
 
