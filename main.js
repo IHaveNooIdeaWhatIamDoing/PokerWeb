@@ -16,6 +16,8 @@ const PlayerCallBtn = doc.querySelectorAll('#CallButton');
 const PlayerCheckBtn = doc.querySelectorAll('#CheckButton');
 
 const PlayerBetInput = doc.querySelectorAll('#PlayerBet');
+//Geld
+const PlayerMoneyTxt = doc.querySelectorAll('#PlayerMoney');
 
 //Multiplayer
 PlCount=3;
@@ -24,6 +26,7 @@ PlCount=3;
 let Pot;
 let PlayerBets = [];
 let PlayerMoney = [];
+let WasRaised;
 getCardPaths();
 
 handOut(3);
@@ -33,7 +36,7 @@ Main();
 
 async function Main(){
     
-    
+    BetManager(); 
     
     
 }
@@ -68,12 +71,24 @@ function getBet(){
     }
 }
 
-function BetManager(){
-    
-    for(let i = 0; i < PlCount; i++){       
-        await(AskForBet(i));
+ async function BetManager(){ 
+    WasRaised = false;   
+    for(let i = 0; i < PlCount; i++){  
+        PlayerCardDiv[i].style.border = "5px solid red";     //highlight current player 
+        await(AskForBet(i));  
+        PlayerCardDiv[i].style.border = "5px solid white"; //reset border
         UpdatePot();   
+        
     }
+    if(WasRaised){
+        BetManager(); //Wenn ein Spieler erhöht, wird die Funktion erneut aufgerufen
+    }
+    else{
+        console.log("BetManager finished");
+        return;
+    }
+
+
 }
 
 
@@ -81,11 +96,14 @@ function BetManager(){
     
     return new Promise(resolve => {
         addEventListener("click", (EventTarget) => {
+            
             //Erster Fall: Spieler möchte den Einsatz erhöhen
             if(EventTarget.target === PlayerIncreaseBtn[PlayerNumber]){
                 PlayerBets[PlayerNumber] = +(PlayerBetInput[PlayerNumber].value);
                 console.log(PlayerBets);
+                if(PlayerNumber !== 0)WasRaised = true; //Spieler hat erhöht, aber nur wenn er nicht der Erste ist
                 PlayerNumber = -1; //reset PlayerNumber to -1 to avoid multiple clicks
+                
                 resolve(PlayerBets);
             }
             //Zweiter Fall: Spieler möchte mitgehen
@@ -93,8 +111,12 @@ function BetManager(){
                 
                 PlayerBets[PlayerNumber] = +Math.max(...PlayerBets); //Spieler geht mit der höchsten Wette mit
                  
-                resolve(PlayerBets);
+                resolve(PlayerBets);                
+            }
+            //Dritter Fall: Spieler möchte checken
+            if(EventTarget.target === PlayerCheckBtn[PlayerNumber] && Math.max(...PlayerBets) === PlayerBets[PlayerNumber]){ //CHecken ist nur möglich, wenn der Spieler die höchste Wette hat
                 
+                resolve(PlayerBets);
             }
         })
     })
