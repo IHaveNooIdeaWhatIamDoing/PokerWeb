@@ -11,11 +11,28 @@ const PlayerCardDiv = doc.querySelectorAll('#PlayerCardsDiv');
 const DealerCardDiv = doc.getElementById('DealerCardsDiv');
 const PlayerIncreaseBtn = doc.querySelectorAll('#IncreaseButton');
 
+//Multiplayer
+PlCount=3;
+
+//Bets
+let Pot;
+let PlayerBets = [];
+let PlayerMoney = [];
 getCardPaths();
 
 handOut(3);
 
+Main();
 
+
+async function Main(){
+    console.log("Warten auf Input");
+    for(let i = 0; i < PlCount; i++){
+        await(AskForBet(i));
+    }
+    
+    console.log("Input erhalten");
+}
 
 function spawnCard(SpawnDiv){
     let img = doc.createElement('img');
@@ -38,15 +55,35 @@ function handOut(PlayerCount){
     }
 }
 function getBet(){
-    addEventListener('click', function(EventTarget){
-        console.log(EventTarget.target.id);
+    PlayerBets = [];
+    for(let i = 1; i <= PlCount; i++){
+        console.log('Player'+i+'Bet');
         
-     });
+        PlayerBets.push(doc.getElementById('Player'+i+'Bet').value);
+    }
 }
 
 
+addEventListener('click', function(EventTarget){
 
+    if(EventTarget.target === PlayerIncreaseBtn[0]){
+        getBet();
+    }
+    
+ });
 
+ //JavaScript macht keine Sinn
+ function AskForBet(PlayerNumber){
+    
+    return new Promise(resolve => {
+        addEventListener("click", (EventTarget) => {
+            if(EventTarget.target === PlayerIncreaseBtn[PlayerNumber]){
+                resolve(PlayerBets);
+            }
+        })
+    })
+ }
+ 
 
 
 
