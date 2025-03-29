@@ -9,7 +9,13 @@ let cardValues = [];
 const doc = document;
 const PlayerCardDiv = doc.querySelectorAll('#PlayerCardsDiv');
 const DealerCardDiv = doc.getElementById('DealerCardsDiv');
+const PotTxt = doc.getElementById('Pot');
+//Player Buttons
 const PlayerIncreaseBtn = doc.querySelectorAll('#IncreaseButton');
+const PlayerCallBtn = doc.querySelectorAll('#CallButton');
+const PlayerCheckBtn = doc.querySelectorAll('#CheckButton');
+
+const PlayerBetInput = doc.querySelectorAll('#PlayerBet');
 
 //Multiplayer
 PlCount=3;
@@ -26,12 +32,10 @@ Main();
 
 
 async function Main(){
-    console.log("Warten auf Input");
-    for(let i = 0; i < PlCount; i++){
-        await(AskForBet(i));
-    }
     
-    console.log("Input erhalten");
+    
+    
+    
 }
 
 function spawnCard(SpawnDiv){
@@ -42,6 +46,7 @@ function spawnCard(SpawnDiv){
     SpawnDiv.appendChild(img); 
     img.style.width = '100px';
     img.style.height = '150px';
+    
 }
 
 function getRandomCardIndex(){
@@ -63,35 +68,46 @@ function getBet(){
     }
 }
 
-
-addEventListener('click', function(EventTarget){
-
-    if(EventTarget.target === PlayerIncreaseBtn[0]){
-        getBet();
-    }
+function BetManager(){
     
- });
+    for(let i = 0; i < PlCount; i++){       
+        await(AskForBet(i));
+        UpdatePot();   
+    }
+}
 
- //JavaScript macht keine Sinn
+
  function AskForBet(PlayerNumber){
     
     return new Promise(resolve => {
         addEventListener("click", (EventTarget) => {
+            //Erster Fall: Spieler möchte den Einsatz erhöhen
             if(EventTarget.target === PlayerIncreaseBtn[PlayerNumber]){
+                PlayerBets[PlayerNumber] = +(PlayerBetInput[PlayerNumber].value);
+                console.log(PlayerBets);
+                PlayerNumber = -1; //reset PlayerNumber to -1 to avoid multiple clicks
                 resolve(PlayerBets);
+            }
+            //Zweiter Fall: Spieler möchte mitgehen
+            if(EventTarget.target === PlayerCallBtn[PlayerNumber]){
+                
+                PlayerBets[PlayerNumber] = +Math.max(...PlayerBets); //Spieler geht mit der höchsten Wette mit
+                 
+                resolve(PlayerBets);
+                
             }
         })
     })
  }
  
-
-
-
-
-
-
-
-
+ function UpdatePot(){
+    let sum = 0;
+    for(let i = 0; i < PlayerBets.length; i++){
+        sum += +PlayerBets[i];
+    }
+    console.log("Pot: "+ sum);
+    PotTxt.innerHTML = sum;
+ }
 
 function getCardPaths(){
 for(let i = 0; i < symbols.length; i++){
