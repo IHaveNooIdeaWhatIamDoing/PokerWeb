@@ -1,3 +1,5 @@
+
+
 const symbols = ['clubs', 'diamonds', 'hearts', 'spades'];
 const numbers = ['2', '3', '4', '5', '6', '7', '8', '9', '10'];
 const HighCards = ['jack', 'queen', 'king', 'ace'];
@@ -15,12 +17,14 @@ const PlayerIncreaseBtn = doc.querySelectorAll('#IncreaseButton');
 const PlayerCallBtn = doc.querySelectorAll('#CallButton');
 const PlayerCheckBtn = doc.querySelectorAll('#CheckButton');
 
-const PlayerBetInput = doc.querySelectorAll('#PlayerBet');
+const PlayerBetInputTxt = doc.querySelectorAll('#PlayerBet');
+let PlayerBetInput= [];
 //Geld
 const PlayerMoneyTxt = doc.querySelectorAll('#PlayerMoney');
 
 //Multiplayer
-PlCount=3;
+const PlCount=3;
+
 
 //Bets
 let Pot;
@@ -34,11 +38,19 @@ handOut(3);
 Main();
 
 
-async function Main(){
-    
+function Main(){
+    MakeToRightDataType();
+    createBets();
+    console.log("Bets has been created: "+PlayerBets);
     BetManager(); 
     
     
+}
+function MakeToRightDataType(){
+    for(let i = 0; i < PlayerBetInputTxt.length; i++){
+        PlayerBetInput.push( parseInt(PlayerBetInputTxt[i].value));
+        console.log(PlayerBetInput[i]); 
+    }
 }
 
 function spawnCard(SpawnDiv){
@@ -62,12 +74,11 @@ function handOut(PlayerCount){
         spawnCard(PlayerCardDiv[i]);
     }
 }
-function getBet(){
-    PlayerBets = [];
-    for(let i = 1; i <= PlCount; i++){
-        console.log('Player'+i+'Bet');
-        
-        PlayerBets.push(doc.getElementById('Player'+i+'Bet').value);
+function createBets(){
+    for(let i = 0; i < PlCount; i++){
+        PlayerBets[i]= parseInt("0");
+        console.log("Playerbets von "+i+" ist "+ PlayerBets[i]);
+        console.log(PlayerBets[i] === 0);
     }
 }
 
@@ -96,10 +107,10 @@ function getBet(){
     
     return new Promise(resolve => {
         addEventListener("click", (EventTarget) => {
-            
+            console.log(Math.max(...PlayerBets)+" "+ parseInt(PlayerBetInput[PlayerNumber]));
             //Erster Fall: Spieler möchte den Einsatz erhöhen
-            if(EventTarget.target === PlayerIncreaseBtn[PlayerNumber]){
-                PlayerBets[PlayerNumber] = +(PlayerBetInput[PlayerNumber].value);
+            if(EventTarget.target === PlayerIncreaseBtn[PlayerNumber] && PlayerBetInput[PlayerNumber] > Math.max(...PlayerBets)){
+                PlayerBets[PlayerNumber] =+ +(PlayerBetInput[PlayerNumber]);
                 console.log(PlayerBets);
                 if(PlayerNumber !== 0)WasRaised = true; //Spieler hat erhöht, aber nur wenn er nicht der Erste ist
                 PlayerNumber = -1; //reset PlayerNumber to -1 to avoid multiple clicks
@@ -115,13 +126,18 @@ function getBet(){
             }
             //Dritter Fall: Spieler möchte checken
             if(EventTarget.target === PlayerCheckBtn[PlayerNumber] && Math.max(...PlayerBets) === PlayerBets[PlayerNumber]){ //CHecken ist nur möglich, wenn der Spieler die höchste Wette hat
-                
                 resolve(PlayerBets);
             }
+            
         })
     })
  }
  
+//Funktion die Überprüft ob man mitgehen kann, bzw erhöhen kann
+function CheckForMoney(i){
+
+}
+
  function UpdatePot(){
     let sum = 0;
     for(let i = 0; i < PlayerBets.length; i++){
