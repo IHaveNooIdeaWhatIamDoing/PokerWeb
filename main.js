@@ -1,5 +1,4 @@
 
-
 const symbols = ['clubs', 'diamonds', 'hearts', 'spades'];
 const numbers = ['2', '3', '4', '5', '6', '7', '8', '9', '10'];
 const HighCards = ['jack', 'queen', 'king', 'ace'];
@@ -47,8 +46,11 @@ async function Main(){
     await(BetManager());
     //first 3 cards are dealt
     handOutDealerCards(3); //3 cards for dealer
-    
-    
+    await(BetManager()); //Second Betting Phase
+    handOutDealerCards(1); //1 card for dealer
+    await(BetManager()); //Third Betting Phase
+    console.log("Hier sollte es weitergehen");
+    handOutDealerCards(1); //last card for dealer
 }
 function MakeToRightDataType(){
     for(let i = 0; i < PlayerBetInputTxt.length; i++){
@@ -69,7 +71,7 @@ function spawnCard(SpawnDiv){
 }
 
 function getRandomCardIndex(){
-    return Math.round(Math.random() * 52);
+    return Math.round(Math.random() * 51);
 }
 
 function handOut(PlayerCount){
@@ -95,22 +97,21 @@ function createBets(){
 
 async function BetManager(){ 
 
+//Hier dann deguggen 
 return new Promise(async resolve => {
     WasRaised = false;   
     for(let i = 0; i < PlCount; i++){  
         PlayerCardDiv[i].style.border = "5px solid red";     //highlight current player 
         await(AskForBet(i));  
         PlayerCardDiv[i].style.border = "5px solid white"; //reset border
-        UpdatePot();   
-        
-        
+        UpdatePot();       
     }
     if(WasRaised){
         BetManager(); //Wenn ein Spieler erhöht, wird die Funktion erneut aufgerufen
     }
     else{
         console.log("BetManager finished");
-        resolve(); //Wenn kein Spieler erhöht, wird die Funktion beendet
+        resolve(null); //Wenn kein Spieler erhöht, wird die Funktion beendet
     }
 
 })
@@ -122,18 +123,20 @@ return new Promise(async resolve => {
     
     return new Promise(resolve => {
         addEventListener("click", (EventTarget) => {
+            
+            if(PlayerNumber === -1) return; //Wenn PlayerNumber -1 ist, wird die Funktion beendet
             console.log(PlayerBets);
             PlayerBetInput[PlayerNumber] = parseInt(PlayerBetInputTxt[PlayerNumber].value); //Aktualisiere den Einsatz des Spielers
             console.log(Math.max(...PlayerBets)+" "+ parseInt(PlayerBetInput[PlayerNumber]));
             //Erster Fall: Spieler möchte den Einsatz erhöhen
-            if(EventTarget.target === PlayerIncreaseBtn[PlayerNumber] && PlayerBetInput[PlayerNumber] > Math.max(...PlayerBets)){
+            if(EventTarget.target === PlayerIncreaseBtn[PlayerNumber] && PlayerBetInput[PlayerNumber] >= Math.max(...PlayerBets)){
                 PlayerBets[PlayerNumber] =+ +(PlayerBetInput[PlayerNumber]);
                 console.log(PlayerBets);
                 if(PlayerNumber !== 0)WasRaised = true; //Spieler hat erhöht, aber nur wenn er nicht der Erste ist
                 PlayerNumber = -1; //reset PlayerNumber to -1 to avoid multiple clicks
-            
                 resolve();
             }
+            else console.log("Konnte nicht erhöhen weil:"+ PlayerBetInput[PlayerNumber] + " > " + Math.max(...PlayerBets)); //Debugging Ausgabe
             //Zweiter Fall: Spieler möchte mitgehen
             if(EventTarget.target === PlayerCallBtn[PlayerNumber]){
                 
