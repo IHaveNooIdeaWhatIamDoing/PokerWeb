@@ -5,6 +5,9 @@ const HighCards = ['jack', 'queen', 'king', 'ace'];
 
 let cardPictures = [];
 let cardValues = [];
+let PlayerCardsPath = [[]];
+let DealerCardsPath = []
+
 
 //DOM elements
 const doc = document;
@@ -30,11 +33,13 @@ const PlCount=3;
 let Pot;
 let PlayerBets = [];
 let WasRaised;
-let FoldedPlayers = []; //Stores the Index of the players who folded
+let FoldedPlayers = [];
+let AllInPlayers = [];
 //Betting Bools
 let increaseAble;
 let callAble;
 let checkAble;
+let allInAble;
 
 
 getCardPaths();
@@ -46,12 +51,13 @@ Main();
 
 async function Main(){
     //Start Procedure
+    
     console.log(PlayerMoneyTxt);
     assignMoney();
     UpdateMoney();  
     MakeToRightDataType();
     createBets();
-    createFoldedPlayers();
+    createPlayerArrays();
     //Game Starts   
     //First Betting Phase
     
@@ -78,6 +84,7 @@ function spawnCard(SpawnDiv){
     SpawnDiv.appendChild(img); 
     img.style.width = '100px';
     img.style.height = '150px';
+    return img;
     
 }
  function UpdateMoney(){
@@ -95,19 +102,29 @@ function spawnCard(SpawnDiv){
  }
 
 function getRandomCardIndex(){
-    return Math.round(Math.random() * 51);
+    let DebugCards = [10,9,8,24,25,26,27,28,29]
+    return DebugCards[Math.round(Math.random()*8)];
+    //return Math.round(Math.random() * 51);
 }
 
 function handOut(PlayerCount){
     for(let i = 0; i < PlayerCount; i++){
-        spawnCard(PlayerCardDiv[i]);
-        spawnCard(PlayerCardDiv[i]);
+        console.log("HandOut "+i);
+        
+        
+        PlayerCardsPath[i]= [
+            spawnCard(PlayerCardDiv[i]),
+            spawnCard(PlayerCardDiv[i])
+        ]; 
+        
+        
+   
     }
 }
 
 function handOutDealerCards(cardCount){
     for(let i = 0; i < cardCount; i++){
-        spawnCard(DealerCardDiv);
+        DealerCardsPath.push(spawnCard(DealerCardDiv));
     }
 }
 
@@ -119,9 +136,10 @@ function createBets(){
     }
 }
 
-function createFoldedPlayers(){
+function createPlayerArrays(){
     for(let i = 0; i < PlCount; i++){
         FoldedPlayers.push(false); 
+        AllInPlayers.push(false);
     }
 }
 
@@ -131,7 +149,7 @@ return new Promise(async resolve => {
     WasRaised = false;   
     for(let i = 0; i < PlCount; i++){  
         PlayerCardDiv[i].style.border = "5px solid red";     //highlight current player 
-        if(FoldedPlayers[i] == false) await(AskForBet(i));  //Wenn Spieler nicht gefoldet hat
+        if(FoldedPlayers[i] == false && AllInPlayers[i] == false ) await(AskForBet(i));  //Wenn Spieler nicht gefoldet hat
         PlayerCardDiv[i].style.border = "5px solid white"; //reset border
         UpdateUi();
         UpdatePot();       
@@ -153,7 +171,8 @@ return new Promise(async resolve => {
 
  function AskForBet(PlayerNumber){
 
-    if(PlayerNumber === -1) return; //Wenn PlayerNumber -1 ist, wird die Funktion beendet
+    if(PlayerNumber === -1 ) return; //Wenn PlayerNumber -1 ist, wird die Funktion beendet
+
     
     CheckForMoney(PlayerNumber); //First Update
     
@@ -177,7 +196,7 @@ return new Promise(async resolve => {
             }          
             
             //Zweiter Fall: Spieler möchte mitgehen
-            if(EventTarget.target === PlayerCallBtn[PlayerNumber] && callAble){
+            if(EventTarget.target === PlayerCallBtn[PlayerNumber] && callAble && !allInAble){ 
                 PlayerMoney[PlayerNumber] -= Math.max(...PlayerBets) - PlayerBets[PlayerNumber]; //Abziehen des Einsatzes vom Geld des Spielers
                 PlayerBets[PlayerNumber] = +Math.max(...PlayerBets); //Spieler geht mit der höchsten Wette mit
                 PlayerNumber = -1; 
@@ -196,10 +215,12 @@ return new Promise(async resolve => {
                 resolve(PlayerBets);
             }
             //5. Fall: ALL IN!
-            if(EventTarget.target === PlayerCallBtn[PlayerNumber] && !callAble && !increaseAble && !checkAble){
+            if(EventTarget.target === PlayerCallBtn[PlayerNumber] && allInAble){
                 PlayerBets[PlayerNumber] += PlayerMoney[PlayerNumber]; //Spieler geht all in
                 PlayerMoney[PlayerNumber] = 0; //Spieler hat kein Geld mehr
+                AllInPlayers[PlayerNumber] = true; 
                 PlayerNumber = -1; //reset PlayerNumber to -1 to avoid multiple clicks
+                
                 resolve(PlayerBets); 
             }
             
@@ -210,6 +231,7 @@ return new Promise(async resolve => {
 //Funktion die Überprüft ob man mitgehen kann, bzw erhöhen kann
 function CheckForMoney(i){
 
+        allInAble = false;
         //Update input
         if(i === -1) return;
         PlayerBetInput[i] = parseInt(PlayerBetInputTxt[i].value); 
@@ -233,7 +255,10 @@ function CheckForMoney(i){
         else checkAble = false;
 
         if(PlayerMoney[i] <= Math.max(...PlayerBets) && PlayerBets[i] != Math.max(...PlayerBets)){
-            callAble = false; 
+
+            PlayerCardDiv[i].style.border = "5px solid green";    
+            callAble = true; 
+            allInAble = true;
             increaseAble = false;
             checkAble = false;
             console.log("Case 4");
@@ -245,7 +270,6 @@ function CheckForMoney(i){
 function UpdateAll(){
     for(let i = 0; i < PlCount; i++){
         PlayerBetInput[i] = parseInt(PlayerBetInputTxt[i].value); //Aktualisiere den Einsatz des Spielers
-        console.log("GotUpdated");
     }
 }
 
@@ -254,7 +278,7 @@ function UpdateAll(){
     for(let i = 0; i < PlayerBets.length; i++){
         sum += +PlayerBets[i];
     }
-    console.log("Pot: "+ sum);
+    
     PotTxt.innerHTML = sum;
  }
  function UpdateUi(){
@@ -281,6 +305,209 @@ for(let i = 0; i < symbols.length; i++){
 }
 }
 
+
+
+
+
+
+//Check The Hands
+let PlayerCards = [[]];
+let DealerCards = [];
+
+
+function LookForHands(){
+
+    assignePlayerCards();
+    assigneDealerCards();
+
+    CalculateHands();
+    } 
+    
+    function assignePlayerCards(){
+
+        for(let i = 0; i < PlCount; i++)
+            {            
+                PlayerCards[i]= [
+                new Card
+                (
+                    PlayerCardsPath[i][0].src.match(/_of_([a-z]+)(?:\d*)\.png/i)[1], //Symbol
+                    false,
+                    PlayerCardsPath[i][0].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1], //Value
+                ),
+                new Card
+                (
+                    PlayerCardsPath[i][1].src.match(/_of_([a-z]+)(?:\d*)\.png/i)[1],
+                    false,
+                    PlayerCardsPath[i][1].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1],
+                )
+                    ];  
+            }
+    }
+
+    function assigneDealerCards(){
+        for(let i = 0; i < DealerCardsPath.length; i++){
+            DealerCards[i] =
+                new Card(
+                    DealerCardsPath[i].src.match(/_of_([a-z]+)(?:\d*)\.png/i)[1], //Symbol
+                    false,
+                    DealerCardsPath[i].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1], //Value
+                )   
+        }
+        
+    }
+
+    let Hand;
+    function CalculateHands(){
+        for(let i = 0; i < PlCount; i++){
+            
+            Hand = getFullHand(i);
+            
+            CheckForPairs(i, Hand);
+            CheckForFlush(Hand)
+            CheckForStraight(Hand)
+            
+            
+            
+        }
+       
+ 
+    }
+
+    function getFullHand(i){
+        let hand = [];
+        hand.push(PlayerCards[i][0]);
+        hand.push(PlayerCards[i][1]);
+        for(let j = 0; j < DealerCards.length; j++){
+        hand.push(DealerCards[j]);
+        }  
+        return hand;
+    }
+    
+    let isStraight = false;
+    const straightCardsOrder = ["ace",'2', '3', '4', '5', '6', '7', '8', '9', '10',"jack","queen","king","ace"];
+    let straightLenght = 5;
+
+    function CheckForStraight(hand){
+        isStraight = false;
+        let orderedHand;
+        isStraight = false;
+        
+        orderedHand = OrderArray(hand = hand, straightCardsOrder)
+        console.log("Nach Reihenfolge: " );
+        console.log(orderedHand)
+        let count;
+        for(let i = 0; i < orderedHand.length; i++){
+            if(orderedHand[i] != undefined) count++;
+            if(count >= straightLenght){
+                isStraight = true;
+                break;
+            }
+            if(orderedHand[i] == undefined) count = 0;
+        }
+        console.log("So viele sind in Reihenfolge: "+ count)
+    }
+
+    function OrderArray(hand, order){
+        
+        let newArray = [];
+        for(let i = 0; i < hand.length; i++){
+            for(let j = 0; j < order.length; j++){
+                if(hand[i].value == order[j]){
+                    newArray[j] = hand[i]
+                }
+            }
+        }
+        return newArray;
+    }
+
+    let isFlush = false;
+    function CheckForFlush(hand){
+    isFlush = false;
+        let symbolCards = [];
+        for(let i = 0; i < symbols.length; i++) symbolCards.push(0);
+        for(let i = 0; i < hand.length; i++){
+            for(let j = 0; j < symbols.length; j++){
+                
+                if(hand[i].symbol == symbols[j]){
+                    symbolCards[j] += 1;
+                }
+            }
+        }
+        for(let i = 0; i< symbolCards.length; i++){
+            if(symbolCards[i] >= 5){
+                isFlush = true;
+            }
+        }
+        
+    }
+
+
+
+    let idk = [[]];
+    //Pair Möglichkeiten
+    let pairCount = 0;
+    let isPairs = false;
+    let isFourOfOneKind = false;
+    let isThreeOfOneKind = false;
+    
+    function CheckForPairs(plNum, hand){
+    let pairs = [[]] //Das muss dann in der Funktion sein
+    pairCount = 0;
+    isPairs = false;
+    isFourOfOneKind = false;
+    isThreeOfOneKind = false;
+    pairs[0] = []
+        for(let i = 0; i < hand.length; i++){
+            for(let j = i+1; j < hand.length; j++){
+                
+                if(hand[i].value == hand[j].value) //Falls Pair gefunden
+                { 
+                    isPairs = true;  
+                    pairCount++;
+                    for(let y = j+1; y < hand.length; y++){
+                      
+                        if(hand[j].value == hand[y].value){
+                        pairCount--;
+                          isThreeOfOneKind = true;
+                            for(let x = y+1; x < hand.length; x++){
+                                if(hand[y].value == hand[x].value){
+                                    pairCount--;
+                                   isFourOfOneKind = true;
+                                }
+                            }
+                        }
+                    }
+                    //pairs[pairCount] = [i,j] ;  //Speichert ein Pair mit dem index beider Karten
+                    
+                }
+                
+            
+           
+        }
+
+       
+        
+    }
+    console.log("Das Ergebnis von Spieler " + plNum + " ist: " + 
+        "Ist ein Pair: " + isPairs + ", " + 
+        "Ist ein Drilling: " + isThreeOfOneKind + ", " + 
+        "Ist ein Vierling: " + isFourOfOneKind
+        +" Pairanzahl: "+ pairCount);
+
+}
+
+
+
+
+class Card{
+    constructor(symbol, IsNumber, value){
+        this.symbol = symbol;
+        this.IsNumber = IsNumber;
+        this.value = value;
+    }
+}
+
+
 function Debug(i){
     console.log("Highest Bet: "+ Math.max(...PlayerBets));
     console.log("PlayerBetInput: "+ PlayerBetInput[i]);
@@ -289,3 +516,12 @@ function Debug(i){
     console.log("CallAble: "+ callAble);
     console.log("IncreaseAble: "+ increaseAble);
 }
+
+function skip(){
+    const startTime = performance.now();
+    handOutDealerCards(5);
+    LookForHands();
+    const endTime = performance.now();
+    console.log("Das Programm hat so lange gebraucht: "+ startTime+" , "+ endTime);
+}
+
