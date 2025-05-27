@@ -308,11 +308,22 @@ for(let i = 0; i < symbols.length; i++){
 
 
 
+//Card Stats
+const pairValue = 100;
+const twoPairValue = 200;
+const threeOfOneKindValue = 300;
+const straightValue = 400;
+const flushValue = 500;
+const fullHouseValue = 600;
+const fourOfOneKindValue = 700;
+
+
 
 
 //Check The Hands
 let PlayerCards = [[]];
 let DealerCards = [];
+let handValues = Array(PlCount).fill(0);
 
 
 function LookForHands(){
@@ -323,22 +334,32 @@ function LookForHands(){
     CalculateHands();
     } 
     
+    const notNumberValues = ["ace", "king", "jack", "queen"];
+    const trueValueTable = ["0", "1","2","3","4","5","6","7","8","9","jack","queen", "king", "ace"] //the true Value of a Card is the Index of the Array
     function assignePlayerCards(){
 
         for(let i = 0; i < PlCount; i++)
-            {            
+            {          
+                let trueValues = Array(2).fill(0);  
+
+                trueValues[0] = trueValueTable.indexOf(PlayerCardsPath[i][0].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1]);
+                trueValues[1] = trueValueTable.indexOf(PlayerCardsPath[i][1].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1]);
                 PlayerCards[i]= [
                 new Card
                 (
                     PlayerCardsPath[i][0].src.match(/_of_([a-z]+)(?:\d*)\.png/i)[1], //Symbol
                     false,
                     PlayerCardsPath[i][0].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1], //Value
+                    trueValues[0],// True Value (jack = 10)
+
+                    
                 ),
                 new Card
                 (
                     PlayerCardsPath[i][1].src.match(/_of_([a-z]+)(?:\d*)\.png/i)[1],
                     false,
                     PlayerCardsPath[i][1].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1],
+                    trueValues[1],
                 )
                     ];  
             }
@@ -360,17 +381,30 @@ function LookForHands(){
     function CalculateHands(){
         for(let i = 0; i < PlCount; i++){
             
-            Hand = getFullHand(i);
-            
+            Hand = getFullHand(i);          
             CheckForPairs(i, Hand);
-            CheckForFlush(Hand)
-            CheckForStraight(Hand)
+            CheckForFlush(Hand, i);
+            CheckForStraight(Hand, i);
+            checkForFullHouse(i);    
             
-            
-            
+            calculateValue(i);
+            console.log(handValues[i]);
         }
-       
- 
+        let maxValue = Math.max(...handValues);
+        let winnerIndex = handValues.indexOf(maxValue);
+        console.log("Und der Gewinner ist: "+ winnerIndex);
+    }
+    function calculateValue(plNum){
+        //Überprüft jeden Fall und rechnet den Score dazu
+        if(isFourOfOneKind[plNum]) handValues[plNum] = fourOfOneKindValue;
+        else if(isFullHouse[plNum]) handValues[plNum] = fullHouseValue;
+        else if(isFlush[plNum]) handValues[plNum] = flushValue;
+        else if(isStraight[plNum]) handValues[plNum] = straightValue;
+        else if(isThreeOfOneKind[plNum]) handValues[plNum] = threeOfOneKindValue;
+        else if(pairCount[plNum] >= 2) handValues[plNum] = twoPairValue;
+        else if(isPairs[plNum]) handValues[plNum] = pairValue;
+
+        handValues[plNum] += PlayerCards[plNum][0].trueValue + PlayerCards[plNum][0].trueValue; 
     }
 
     function getFullHand(i){
@@ -383,14 +417,14 @@ function LookForHands(){
         return hand;
     }
     
-    let isStraight = false;
+    let isStraight = [];
     const straightCardsOrder = ["ace",'2', '3', '4', '5', '6', '7', '8', '9', '10',"jack","queen","king","ace"];
-    let straightLenght = 5;
+    let straightLenght = 5; 
 
-    function CheckForStraight(hand){
-        isStraight = false;
+    function CheckForStraight(hand, plNum){
+        isStraight[plNum] = false;
         let orderedHand;
-        isStraight = false;
+        isStraight[plNum] = false;
         
         orderedHand = OrderArray(hand = hand, straightCardsOrder)
         console.log("Nach Reihenfolge: " );
@@ -399,11 +433,12 @@ function LookForHands(){
         for(let i = 0; i < orderedHand.length; i++){
             if(orderedHand[i] != undefined) count++;
             if(count >= straightLenght){
-                isStraight = true;
+                isStraight[plNum] = true;
                 break;
             }
             if(orderedHand[i] == undefined) count = 0;
         }
+        if(count >= 4) isStraight[plNum] = true;
         console.log("So viele sind in Reihenfolge: "+ count)
     }
 
@@ -420,9 +455,9 @@ function LookForHands(){
         return newArray;
     }
 
-    let isFlush = false;
-    function CheckForFlush(hand){
-    isFlush = false;
+    let isFlush = [];
+    function CheckForFlush(hand, plNum){
+    isFlush[plNum] = false;
         let symbolCards = [];
         for(let i = 0; i < symbols.length; i++) symbolCards.push(0);
         for(let i = 0; i < hand.length; i++){
@@ -435,7 +470,7 @@ function LookForHands(){
         }
         for(let i = 0; i< symbolCards.length; i++){
             if(symbolCards[i] >= 5){
-                isFlush = true;
+                isFlush[plNum] = true;
             }
         }
         
@@ -445,65 +480,75 @@ function LookForHands(){
 
     let idk = [[]];
     //Pair Möglichkeiten
-    let pairCount = 0;
-    let isPairs = false;
-    let isFourOfOneKind = false;
-    let isThreeOfOneKind = false;
+    let pairCount = Array(PlCount).fill(0);
+    let isPairs = Array(PlCount).fill(false);
+    let isFourOfOneKind = Array(PlCount).fill(false);
+    let isThreeOfOneKind = Array(PlCount).fill(false);
     
-    function CheckForPairs(plNum, hand){
     let pairs = [[]] //Das muss dann in der Funktion sein
-    pairCount = 0;
-    isPairs = false;
-    isFourOfOneKind = false;
-    isThreeOfOneKind = false;
-    pairs[0] = []
+    function CheckForPairs(plNum, hand){
+    
+    
+    pairs[plNum] = []
         for(let i = 0; i < hand.length; i++){
             for(let j = i+1; j < hand.length; j++){
                 
                 if(hand[i].value == hand[j].value) //Falls Pair gefunden
                 { 
-                    isPairs = true;  
-                    pairCount++;
+
+                    isPairs[plNum] = true;  
+                    pairCount[plNum]++; 
+                    //Speichere den Index des Pairs nur ab, wenn er nicht schon gespeichert wurde, damit es keine doppelten Werte gibt
+                    if(pairs[plNum].indexOf(i) == -1 && pairs[plNum].indexOf(j) == -1) pairs[plNum].push(i,j);
+
                     for(let y = j+1; y < hand.length; y++){
                       
                         if(hand[j].value == hand[y].value){
-                        pairCount--;
-                          isThreeOfOneKind = true;
+                        pairCount[plNum]--;
+                          isThreeOfOneKind[plNum] = true;
+                          
                             for(let x = y+1; x < hand.length; x++){
                                 if(hand[y].value == hand[x].value){
-                                    pairCount--;
-                                   isFourOfOneKind = true;
+                                    pairCount[plNum]--;
+                                   isFourOfOneKind[plNum] = true;
                                 }
                             }
                         }
-                    }
-                    //pairs[pairCount] = [i,j] ;  //Speichert ein Pair mit dem index beider Karten
-                    
+                    }                 
                 }
-                
-            
-           
-        }
-
-       
+        //Checks for Full House 
         
+            }
+
+    
     }
     console.log("Das Ergebnis von Spieler " + plNum + " ist: " + 
-        "Ist ein Pair: " + isPairs + ", " + 
-        "Ist ein Drilling: " + isThreeOfOneKind + ", " + 
-        "Ist ein Vierling: " + isFourOfOneKind
-        +" Pairanzahl: "+ pairCount);
+        "Ist ein Pair: " + isPairs[plNum] + ", " + 
+        "Ist ein Drilling: " + isThreeOfOneKind[plNum] + ", " + 
+        "Ist ein Vierling: " + isFourOfOneKind[plNum]
+        +" Pairanzahl: "+ pairCount[plNum]);
+
+        console.log("Diese Pairs wurden von gefunden Player|Index: "+ pairs[plNum]);
 
 }
 
 
 
+let isFullHouse = []
+function checkForFullHouse(num){
+    if(pairs[num].length >= 4 && isThreeOfOneKind[num]) isFullHouse[num] = true;
+    else isFullHouse[num] = false;
+    console.log("Spieler " + num + " hat ein Fullhouse: " + isFullHouse[num]);
+}
+
+
 
 class Card{
-    constructor(symbol, IsNumber, value){
+    constructor(symbol, IsNumber, value, trueValue){
         this.symbol = symbol;
         this.IsNumber = IsNumber;
         this.value = value;
+        this.trueValue = trueValue;
     }
 }
 
@@ -525,3 +570,9 @@ function skip(){
     console.log("Das Programm hat so lange gebraucht: "+ startTime+" , "+ endTime);
 }
 
+function debugArray(){
+    pairCount[0] = 2
+    pairCount[1] = 2
+    pairCount[2] = 2
+    return pairs;
+}
