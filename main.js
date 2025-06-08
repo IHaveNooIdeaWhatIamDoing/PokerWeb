@@ -1,12 +1,16 @@
 
+//Multiplayer
+const PlCount=3;
+
 const symbols = ['clubs', 'diamonds', 'hearts', 'spades'];
 const numbers = ['2', '3', '4', '5', '6', '7', '8', '9', '10'];
 const HighCards = ['jack', 'queen', 'king', 'ace'];
 
 let cardPictures = [];
 let cardValues = [];
-let PlayerCardsPath = [[]];
+let PlayerCardsImg = [[]];
 let DealerCardsPath = []
+let PlayerCardsImgSrc = Array.from({ length: PlCount }, () => Array(2).fill(0));
 
 
 //DOM elements
@@ -19,15 +23,15 @@ const PlayerIncreaseBtn = doc.querySelectorAll('#IncreaseButton');
 const PlayerCallBtn = doc.querySelectorAll('#CallButton');
 const PlayerCheckBtn = doc.querySelectorAll('#CheckButton');
 const PlayerFoldBtn = doc.querySelectorAll('#FoldButton');
+const playerShowBtn = doc.querySelectorAll('#ShowButton');
 
 let PlayerBetInputTxt = doc.querySelectorAll('#PlayerBet');
 let PlayerBetInput= [];
 //Geld
 const PlayerMoneyTxt = doc.querySelectorAll('#PlayerMoney');
 let PlayerMoney = [];
-//Multiplayer
-const PlCount=3;
 
+let winnerIndex;
 
 //Bets
 let Pot;
@@ -41,26 +45,34 @@ let callAble;
 let checkAble;
 let allInAble;
 
-
+ let cardsHidden = false;
 getCardPaths();
 
-handOut(3);
 
+
+start();
 Main();
 
 
-async function Main(){
-    //Start Procedure
-    
-    console.log(PlayerMoneyTxt);
+
+function start(){
     assignMoney();
+}
+
+async function Main(){
+
+    cardsHidden = false;
+    //Start Procedure
+    handOut(PlCount);
+    
+    
     UpdateMoney();  
     MakeToRightDataType();
     createBets();
     createPlayerArrays();
     //Game Starts   
     //First Betting Phase
-    
+    hideCards()
     await(BetManager());
     //first 3 cards are dealt
     handOutDealerCards(3); //3 cards for dealer
@@ -68,6 +80,22 @@ async function Main(){
     handOutDealerCards(1); //1 card for dealer
     await(BetManager()); //Third Betting Phase
     handOutDealerCards(1); //last card for dealer
+
+    LookForHands();
+    
+    for(let i = 0; i < PlCount; i++){
+        showCards(i);
+    }
+
+    PlayerCardDiv[winnerIndex].style.border = "5px solid blue"; 
+    PlayerMoney[winnerIndex] += parseInt(PotTxt.innerHTML)
+
+    UpdateUi();
+    UpdatePot();  
+
+
+
+
 }
 function MakeToRightDataType(){
     for(let i = 0; i < PlayerBetInputTxt.length; i++){
@@ -77,6 +105,7 @@ function MakeToRightDataType(){
 }
 
 function spawnCard(SpawnDiv){
+    
     let img = doc.createElement('img');
     let rndNum = getRandomCardIndex();
     img.src = cardPictures[rndNum]; 
@@ -109,13 +138,15 @@ function getRandomCardIndex(){
 
 function handOut(PlayerCount){
     for(let i = 0; i < PlayerCount; i++){
-        console.log("HandOut "+i);
         
-        
-        PlayerCardsPath[i]= [
+        PlayerCardsImg[i]= [
             spawnCard(PlayerCardDiv[i]),
             spawnCard(PlayerCardDiv[i])
         ]; 
+        console.log("i: "+i  )
+        console.log("Bei CardSrc wird gespeichert: "+ PlayerCardsImg[i][0].src);
+        PlayerCardsImgSrc[i][0] = PlayerCardsImg[i][0].src;
+        PlayerCardsImgSrc[i][1] = PlayerCardsImg[i][1].src;
         
         
    
@@ -143,6 +174,23 @@ function createPlayerArrays(){
     }
 }
 
+function showCards(plNum){
+    console.log("Cards should now be visible")
+    let img = PlayerCardDiv[plNum].getElementsByTagName("img");
+    cardsHidden = false;
+    img[0].src = PlayerCardsImgSrc[plNum][0];
+    img[1].src = PlayerCardsImgSrc[plNum][1];
+}
+function hideCards(){
+    for(let i = 0; i < PlCount; i++){
+let img = PlayerCardDiv[i].getElementsByTagName("img");
+    cardsHidden = true;
+    img[0].src = "pictures\\card_back_red.png"
+    img[1].src = "pictures\\card_back_red.png"
+    }
+}
+
+
 async function BetManager(){ 
 
 return new Promise(async resolve => {
@@ -167,7 +215,16 @@ return new Promise(async resolve => {
 })
 }
 
-
+function restart(){
+    
+    for(let i = 0; i < PlCount; i++){
+        console.log("Deleting: " +PlayerCardDiv[i])
+        PlayerCardDiv[i].children[0].remove(); 
+        PlayerCardDiv[i].children[0].remove();
+    }
+    
+    Main();
+}
 
  function AskForBet(PlayerNumber){
 
@@ -179,11 +236,21 @@ return new Promise(async resolve => {
     
     return new Promise(resolve => {
         
+       
         addEventListener("click", (EventTarget) => {
             if(PlayerNumber === -1) return; //Wenn PlayerNumber -1 ist, wird die Funktion beendet
             UpdateAll(); //Update all PlayerBetInput
             CheckForMoney(PlayerNumber); //First Update
             
+
+            //Falls der Spieler seine Karten sehen will
+            console.log("Wait for Player Input")
+            
+            if(playerShowBtn[PlayerNumber] === EventTarget.target) 
+                if(cardsHidden) showCards(PlayerNumber);
+                else hideCards();
+                
+
             PlayerBetInput[PlayerNumber] = parseInt(PlayerBetInputTxt[PlayerNumber].value); //Aktualisiere den Einsatz des Spielers
             
             //Erster Fall: Spieler möchte den Einsatz erhöhen
@@ -342,23 +409,23 @@ function LookForHands(){
             {          
                 let trueValues = Array(2).fill(0);  
 
-                trueValues[0] = trueValueTable.indexOf(PlayerCardsPath[i][0].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1]);
-                trueValues[1] = trueValueTable.indexOf(PlayerCardsPath[i][1].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1]);
+                trueValues[0] = trueValueTable.indexOf(PlayerCardsImgSrc[i][0].match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1]);
+                trueValues[1] = trueValueTable.indexOf(PlayerCardsImgSrc[i][1].match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1]);
                 PlayerCards[i]= [
                 new Card
                 (
-                    PlayerCardsPath[i][0].src.match(/_of_([a-z]+)(?:\d*)\.png/i)[1], //Symbol
+                    PlayerCardsImgSrc[i][0].match(/_of_([a-z]+)(?:\d*)\.png/i)[1], //Symbol
                     false,
-                    PlayerCardsPath[i][0].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1], //Value
+                    PlayerCardsImgSrc[i][0].match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1], //Value
                     trueValues[0],// True Value (jack = 10)
 
                     
                 ),
                 new Card
                 (
-                    PlayerCardsPath[i][1].src.match(/_of_([a-z]+)(?:\d*)\.png/i)[1],
+                    PlayerCardsImgSrc[i][0].match(/_of_([a-z]+)(?:\d*)\.png/i)[1],
                     false,
-                    PlayerCardsPath[i][1].src.match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1],
+                    PlayerCardsImgSrc[i][1].match(/\/Cards\/([A-Za-z0-9]+)_of_/i)[1],
                     trueValues[1],
                 )
                     ];  
@@ -376,12 +443,14 @@ function LookForHands(){
         }
         
     }
-
+    
     let Hand;
     function CalculateHands(){
         for(let i = 0; i < PlCount; i++){
-            
-            Hand = getFullHand(i);          
+            if(!FoldedPlayers[i])
+            {
+            Hand = getFullHand(i);   
+                   
             CheckForPairs(i, Hand);
             CheckForFlush(Hand, i);
             CheckForStraight(Hand, i);
@@ -389,9 +458,10 @@ function LookForHands(){
             
             calculateValue(i);
             console.log(handValues[i]);
+            }
         }
         let maxValue = Math.max(...handValues);
-        let winnerIndex = handValues.indexOf(maxValue);
+         winnerIndex = handValues.indexOf(maxValue);
         console.log("Und der Gewinner ist: "+ winnerIndex);
     }
     function calculateValue(plNum){
@@ -408,7 +478,7 @@ function LookForHands(){
     }
 
     function getFullHand(i){
-        let hand = [];
+        let hand = []
         hand.push(PlayerCards[i][0]);
         hand.push(PlayerCards[i][1]);
         for(let j = 0; j < DealerCards.length; j++){
