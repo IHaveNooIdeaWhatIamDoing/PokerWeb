@@ -1,0 +1,55 @@
+body{
+    background-color: rgb(1, 1, 8);
+    color: white;
+    
+}
+
+#headline{
+    font-size: 620%;
+    color: rgb(207, 13, 13);
+    text-align: center;
+}
+
+#txt{
+    font-size: 300%;
+    color: white;
+    text-align: center;
+}
+
+#playerCountBox{
+    
+    margin: auto;
+   
+    border: 10px #2f425a solid;
+    width: 150px;
+    height: 200px;
+    text-align: center;
+} 
+#playerCountNum{
+    
+    font-size: 200px;
+    color: white;
+    margin: auto;
+    margin-top: -15px;
+    
+    
+}
+
+#upBtn{
+    width: 75px;
+    height: 100px;
+    
+    
+    
+}
+
+#downBtn{
+    width: 75px;
+    height: 100px;
+    
+}
+
+table{
+    height: 200px;
+    margin: auto;
+}
