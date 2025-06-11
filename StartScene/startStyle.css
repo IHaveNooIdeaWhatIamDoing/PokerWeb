@@ -49,6 +49,16 @@ body{
     
 }
 
+#startBtn{
+    display: block;
+    margin: auto;
+    background-color:rgb(207, 13, 13) ;
+    margin-top: 50px;
+    font-size: 80px;
+    width: 300px;
+    border: black;
+}
+
 table{
     height: 200px;
     margin: auto;
